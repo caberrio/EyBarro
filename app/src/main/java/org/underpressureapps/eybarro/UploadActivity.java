@@ -1,17 +1,26 @@
 package org.underpressureapps.eybarro;
 
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.Environment;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.Spinner;
 import android.widget.Toast;
+
+import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.StorageReference;
+import com.google.firebase.storage.UploadTask;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -22,12 +31,12 @@ public class UploadActivity extends AppCompatActivity {
     public static final int IMAGE_GALLERY_REQUEST = 20;
     private ImageView imgPicture;
     private Spinner spinner;
+    private StorageReference mStorage = FirebaseStorage.getInstance().getReference();
+    private DatabaseReference database =FirebaseDatabase.getInstance().getReference();
+    private DatabaseReference mesajeRef = database.child("informeEx");
     private EditText descripcion;
     private EditText hora;
-
-    private StorageReference mStorage = FirebaseStorage.getInstance().getReference();
-
-
+    private Intent datosfoto;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -60,6 +69,7 @@ public class UploadActivity extends AppCompatActivity {
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         if (resultCode == RESULT_OK) {
             // if we are here, everything processed successfully.
+            datosfoto=data;
             if (requestCode == IMAGE_GALLERY_REQUEST) {
                 // if we are here, we are hearing back from the image gallery.
 
@@ -103,13 +113,42 @@ public class UploadActivity extends AppCompatActivity {
                 Toast.LENGTH_SHORT).show();
     }
 
-    public void onClickEnviar(View view) {
-        System.out.println(spinner.getSelectedItem().toString());
 
-        if(descripcion.getText().toString().equals("") || descripcion.getText().equals(null) ) {
+    public void onClickEnviar(View view) {
+        if (descripcion.getText().toString().equals("") || descripcion.getText().equals(null)) {
             Toast.makeText(this, "Es necesario adjuntar descripción del informe",
                     Toast.LENGTH_LONG).show();
         }
+
+
+        Uri uri = null;
+        String textofot;
+        if (datosfoto != null) {
+            uri = datosfoto.getData();
+            StorageReference filepath = mStorage.child("Photos").child(uri.getLastPathSegment());
+            filepath.putFile(uri).addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
+                @Override
+                public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
+                    Toast.makeText(UploadActivity.this, "Upload Done", Toast.LENGTH_SHORT).show();
+                }
+            });
+            textofot = datosfoto.getData().getLastPathSegment();
+        } else {
+            textofot = "";
+        }
+
+        String horas;
+        if(hora.getText().toString().equals("") || hora.getText().equals(null) ) {
+            horas="sin hora";
+        }else{
+            horas=hora.getText().toString();
+        }
+
+        DatabaseReference nuevoMensaje = mesajeRef.push();
+        nuevoMensaje.child("descripcion").setValue(descripcion.getText().toString());
+        nuevoMensaje.child("hora").setValue(horas);
+        nuevoMensaje.child("imagen").setValue(textofot);
+        nuevoMensaje.child("lugar").setValue(spinner.getSelectedItem().toString());
 
     }
 }
