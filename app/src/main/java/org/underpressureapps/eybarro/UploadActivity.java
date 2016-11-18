@@ -8,6 +8,7 @@ import android.os.Environment;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.View;
+import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.Spinner;
 import android.widget.Toast;
@@ -21,6 +22,11 @@ public class UploadActivity extends AppCompatActivity {
     public static final int IMAGE_GALLERY_REQUEST = 20;
     private ImageView imgPicture;
     private Spinner spinner;
+    private EditText descripcion;
+    private EditText hora;
+
+    private StorageReference mStorage = FirebaseStorage.getInstance().getReference();
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -28,6 +34,9 @@ public class UploadActivity extends AppCompatActivity {
         setContentView(R.layout.activity_upload);
 
         imgPicture = (ImageView) findViewById(R.id.imgPicture);
+        spinner = (Spinner) findViewById(R.id.spinner);
+        descripcion = (EditText) findViewById(R.id.editTextDescripcion);
+        hora = (EditText) findViewById(R.id.editTextHora);
     }
 
     public void onImageGalleryClicked(View v) {
@@ -92,5 +101,15 @@ public class UploadActivity extends AppCompatActivity {
                 "OnClickListener : " +
                         "\nSpinner : "+ String.valueOf(spinner.getSelectedItem()),
                 Toast.LENGTH_SHORT).show();
+    }
+
+    public void onClickEnviar(View view) {
+        System.out.println(spinner.getSelectedItem().toString());
+
+        if(descripcion.getText().toString().equals("") || descripcion.getText().equals(null) ) {
+            Toast.makeText(this, "Es necesario adjuntar descripción del informe",
+                    Toast.LENGTH_LONG).show();
+        }
+
     }
 }
